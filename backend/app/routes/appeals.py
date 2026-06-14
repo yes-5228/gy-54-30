@@ -13,6 +13,16 @@ def index():
     return jsonify([appeal.to_dict() for appeal in appeals])
 
 
+@appeals_bp.get("/overdue")
+def overdue():
+    appeals = Appeal.query.filter(Appeal.status == "pending").order_by(Appeal.created_at.asc()).all()
+    overdue_appeals = [a for a in appeals if a.is_overdue()]
+    return jsonify({
+        "overdueCount": len(overdue_appeals),
+        "appeals": [a.to_dict() for a in overdue_appeals],
+    })
+
+
 @appeals_bp.post("")
 def create():
     payload = request.get_json() or {}

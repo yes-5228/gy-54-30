@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from flask import current_app
 
 from .extensions import db
 
@@ -71,7 +73,18 @@ class Appeal(db.Model):
 
     grade = db.relationship("Grade", back_populates="appeals")
 
+    def is_overdue(self):
+        if self.status != "pending":
+            return False
+        deadline_hours = current_app.config.get("APPEAL_DEADLINE_HOURS", 72)
+        deadline = self.created_at + timedelta(hours=deadline_hours)
+        return datetime.utcnow() > deadline
+
     def to_dict(self):
+        deadline_hours = current_app.config.get("APPEAL_DEADLINE_HOURS", 72)
+        deadline_at = self.created_at + timedelta(hours=deadline_hours)
+        overdue = self.is_overdue()
+        hours_since = (datetime.utcnow() - self.created_at).total_seconds() / 3600
         return {
             "id": self.id,
             "gradeId": self.grade_id,
@@ -84,4 +97,7 @@ class Appeal(db.Model):
             "teacherResponse": self.teacher_response,
             "createdAt": self.created_at.isoformat(),
             "updatedAt": self.updated_at.isoformat(),
+            "isOverdue": overdue,
+            "deadlineAt": deadline_at.isoformat(),
+            "hoursSinceCreated": round(hours_since, 1),
         }

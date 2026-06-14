@@ -31,6 +31,7 @@ export const api = {
     }),
   getTranscript: (studentNo) => request(`/students/${studentNo}/transcript`),
   listAppeals: () => request("/appeals"),
+  getOverdueAppeals: () => request("/appeals/overdue"),
   createAppeal: (payload) =>
     request("/appeals", {
       method: "POST",
